@@ -69,3 +69,6 @@ Admin Dashboard (/dashboard/admin): Elevated "dark-mode" sidebar interface highl
 Build and Code Delivery
 The application builds successfully using Vite. Dependencies reflect modern standards, successfully addressing the Tailwind CSS v4 to Vite ecosystem migration requirement.
 
+
+Built with love by prasen shinde . 
+
