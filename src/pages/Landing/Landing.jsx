@@ -166,9 +166,10 @@ export default function Landing() {
             </div>
 
             {[
-              { title: "Farmer Lists Produce", desc: "Farmers create an account and list their harvest with expected quantity and price.", align: "right" },
-              { title: "Buyer Places Order", desc: "Restaurants, retailers, or consumers browse the marketplace and buy directly.", align: "left" },
-              { title: "Delivery & Fulfillment", desc: "Our logistics partners pick up from the farm and deliver fresh to the buyer.", align: "right" }
+              { title: "Farmer Lists Produce", desc: "Farmers create an account, manage their inventory, and list their harvest with expected quantity and price. They set their own fair prices without middlemen.", align: "right" },
+              { title: "Buyer Places Order", desc: "Restaurants, retailers, or consumers browse the live marketplace, compare listings, and buy directly from verified growers.", align: "left" },
+              { title: "Delivery & Fulfillment", desc: "Once an order is confirmed, our logistics partners pick up the fresh produce from the farm and deliver it rapidly to the buyer.", align: "right" },
+              { title: "Platform Administration", desc: "Administrators monitor the entire ecosystem, verify users, handle disputes, and maintain platform integrity.", align: "left", button: { text: "Admin Dashboard", link: "/dashboard/admin" } }
             ].map((step, i) => (
               <motion.div 
                 key={i}
@@ -187,7 +188,14 @@ export default function Landing() {
                 <div className={`w-full sm:w-[45%] pl-16 sm:pl-0 ${step.align === 'left' ? 'sm:text-right' : 'sm:text-left'}`}>
                   <div className="glass p-6 rounded-2xl">
                     <h3 className="text-2xl font-bold font-heading mb-3">{step.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{step.desc}</p>
+                    <p className={`text-gray-600 leading-relaxed ${step.button ? 'mb-4' : ''}`}>{step.desc}</p>
+                    {step.button && (
+                      <Link to={step.button.link}>
+                        <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white transition-colors">
+                          {step.button.text}
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </motion.div>

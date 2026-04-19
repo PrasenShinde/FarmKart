@@ -1,41 +1,20 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../../../components/layout/Sidebar';
-import { Package, Truck, CheckCircle2, ChevronDown, Clock, MapPin } from 'lucide-react';
+import { Package, Truck, CheckCircle2, ChevronDown, Clock, MapPin, ShoppingBag } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
+import { useOrders } from '../../../context/OrderContext';
+import { useAuth } from '../../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function BuyerDashboard() {
-  const [expandedOrder, setExpandedOrder] = useState(1);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const { orders } = useOrders();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const orders = [
-    {
-      id: 1,
-      number: 'ORD-7829-XJ',
-      date: 'Oct 24, 2024',
-      status: 'In Transit',
-      total: '₹12,500',
-      items: [
-        { name: 'Organic Vine Tomatoes', qty: '50 kg', price: '₹2,250' },
-        { name: 'Premium Red Onions', qty: '100 kg', price: '₹4,000' }
-      ],
-      farmer: 'Ramesh Patil',
-      expectedDelivery: 'Oct 26, 2024',
-      progress: 2 // 0: Ordered, 1: Accepted, 2: Packed/Transit, 3: Delivered
-    },
-    {
-      id: 2,
-      number: 'ORD-7193-PL',
-      date: 'Oct 20, 2024',
-      status: 'Delivered',
-      total: '₹8,200',
-      items: [
-        { name: 'Fresh Potatoes', qty: '200 kg', price: '₹6,000' }
-      ],
-      farmer: 'Suresh Kumar',
-      expectedDelivery: 'Oct 22, 2024',
-      progress: 3
-    }
-  ];
+  // Filter orders for the current buyer
+  const buyerOrders = orders.filter(order => order.buyer === user?.name);
 
   const renderTracker = (progress) => {
     const steps = [
@@ -103,109 +82,114 @@ export default function BuyerDashboard() {
           </div>
 
           <div className="flex flex-col gap-6">
-            {orders.map((order) => (
-              <motion.div 
-                key={order.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-              >
-                <div 
-                  className="p-6 cursor-pointer hover:bg-gray-50/50 transition-colors"
-                  onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+            {buyerOrders.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-sm">
+                <ShoppingBag size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-xl font-bold text-text-dark mb-2">No Orders Yet</h3>
+                <p className="text-gray-500 mb-6">You haven't placed any orders. Start browsing our fresh produce!</p>
+                <Button onClick={() => navigate('/marketplace')}>Browse Marketplace</Button>
+              </div>
+            ) : (
+              buyerOrders.map((order) => (
+                <motion.div 
+                  key={order.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                 >
-                  <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-primary/10 text-primary rounded-xl">
-                        <Package size={24} />
-                      </div>
-                      <div>
-                        <h3 className="font-heading font-bold text-lg">{order.number}</h3>
-                        <p className="text-sm text-gray-500 flex items-center gap-2">
-                          <Clock size={14} /> Ordered on {order.date}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between md:justify-end gap-6 md:gap-12 flex-grow">
-                      <div className="text-left md:text-right">
-                        <p className="text-sm text-gray-500">Total Amount</p>
-                        <p className="font-bold text-lg text-text-dark">{order.total}</p>
-                      </div>
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50/50 transition-colors"
+                    onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                  >
+                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                       <div className="flex items-center gap-4">
-                        <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                          order.progress === 3 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {order.status}
-                        </span>
-                        <ChevronDown 
-                          className={`text-gray-400 transition-transform ${expandedOrder === order.id ? 'rotate-180' : ''}`} 
-                        />
+                        <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                          <Package size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-heading font-bold text-lg">{order.orderNumber}</h3>
+                          <p className="text-sm text-gray-500 flex items-center gap-2">
+                            <Clock size={14} /> Ordered on {order.date}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between md:justify-end gap-6 md:gap-12 flex-grow">
+                        <div className="text-left md:text-right">
+                          <p className="text-sm text-gray-500">Total Amount</p>
+                          <p className="font-bold text-lg text-text-dark">₹{order.total}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                            order.progress === 3 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {order.status}
+                          </span>
+                          <ChevronDown 
+                            className={`text-gray-400 transition-transform ${expandedOrder === order.id ? 'rotate-180' : ''}`} 
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <AnimatePresence>
-                  {expandedOrder === order.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-gray-100 bg-gray-50/30"
-                    >
-                      <div className="p-6">
-                        <h4 className="font-semibold text-text-dark mb-4">Order Tracking</h4>
-                        <div className="bg-white p-6 rounded-xl border border-gray-100 mb-8 max-w-2xl mx-auto shadow-sm">
-                          {renderTracker(order.progress)}
-                          <p className="text-center text-sm text-gray-500 mt-6 font-medium">
-                            Expected Delivery: <span className="text-text-dark font-bold">{order.expectedDelivery}</span>
-                          </p>
-                        </div>
+                  <AnimatePresence>
+                    {expandedOrder === order.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="border-t border-gray-100 bg-gray-50/30"
+                      >
+                        <div className="p-6">
+                          <h4 className="font-semibold text-text-dark mb-4">Order Tracking</h4>
+                          <div className="bg-white p-6 rounded-xl border border-gray-100 mb-8 max-w-2xl mx-auto shadow-sm">
+                            {renderTracker(order.progress)}
+                            <p className="text-center text-sm text-gray-500 mt-6 font-medium">
+                              Expected Delivery: <span className="text-text-dark font-bold">{order.expectedDelivery}</span>
+                            </p>
+                          </div>
 
-                        <h4 className="font-semibold text-text-dark mb-4">Items Details</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                            <ul className="divide-y divide-gray-100">
-                              {order.items.map((item, idx) => (
-                                <li key={idx} className="p-4 flex justify-between items-center">
-                                  <div>
-                                    <p className="font-medium text-text-dark">{item.name}</p>
-                                    <p className="text-xs text-gray-500">Qty: {item.qty}</p>
-                                  </div>
-                                  <span className="font-semibold text-text-dark">{item.price}</span>
-                                </li>
-                              ))}
-                            </ul>
-                            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-                              <span className="font-bold text-gray-600">Total</span>
-                              <span className="font-bold text-primary text-xl">{order.total}</span>
+                          <h4 className="font-semibold text-text-dark mb-4">Items Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                              <ul className="divide-y divide-gray-100">
+                                {order.items.map((item, idx) => (
+                                  <li key={idx} className="p-4 flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                      <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded-lg" />
+                                      <div>
+                                        <p className="font-medium text-text-dark">{item.name}</p>
+                                        <p className="text-xs text-gray-500">Qty: {item.qty} | Farmer: {item.farmer}</p>
+                                      </div>
+                                    </div>
+                                    <span className="font-semibold text-text-dark">₹{item.price * item.qty}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                                <span className="font-bold text-gray-600">Total (incl. delivery)</span>
+                                <span className="font-bold text-primary text-xl">₹{order.total + 50}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-white rounded-xl border border-gray-100 p-5 h-fit flex flex-col gap-4">
+                              <div>
+                                <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Shipping Address</h5>
+                                <p className="text-sm text-gray-600 line-clamp-2">
+                                  {order.address}
+                                </p>
+                              </div>
+                              <Button variant="outline" className="w-full mt-2">Download Invoice</Button>
                             </div>
                           </div>
-                          
-                          <div className="bg-white rounded-xl border border-gray-100 p-5 h-fit flex flex-col gap-4">
-                            <div>
-                              <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Farmer Info</h5>
-                              <p className="font-medium text-text-dark flex items-center gap-2">
-                                <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">{order.farmer.charAt(0)}</span>
-                                {order.farmer}
-                              </p>
-                            </div>
-                            <div>
-                              <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Shipping Address</h5>
-                              <p className="text-sm text-gray-600 line-clamp-2">
-                                Taj Palace Hotel, Apollo Bandar, Colaba, Mumbai, Maharashtra 400001
-                              </p>
-                            </div>
-                            <Button variant="outline" className="w-full mt-2">Download Invoice</Button>
-                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </main>

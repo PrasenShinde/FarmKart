@@ -1,18 +1,19 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { cn } from '../../utils/cn';
-import { LayoutDashboard, Package, PlusCircle, CreditCard, BarChart3, Settings, LogOut, ShoppingBag, Heart, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Package, PlusCircle, CreditCard, Settings, LogOut, ShoppingBag, Heart, MessageSquare } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar({ role = 'farmer' }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const farmerLinks = [
     { name: 'Overview', path: '/dashboard/farmer', icon: LayoutDashboard },
     { name: 'My Listings', path: '/dashboard/farmer/listings', icon: Package },
     { name: 'Add Produce', path: '/dashboard/farmer/add', icon: PlusCircle },
     { name: 'Orders', path: '/dashboard/farmer/orders', icon: ShoppingBag },
-    { name: 'Earnings', path: '/dashboard/farmer/earnings', icon: CreditCard },
-    { name: 'Analytics', path: '/dashboard/farmer/analytics', icon: BarChart3 },
   ];
 
   const buyerLinks = [
@@ -24,10 +25,17 @@ export default function Sidebar({ role = 'farmer' }) {
 
   const links = role === 'farmer' ? farmerLinks : buyerLinks;
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <aside className="fixed left-0 top-20 bottom-0 w-64 bg-white border-r border-gray-100 flex flex-col pt-6 hidden lg:flex">
       <div className="px-6 mb-8">
-        <h2 className="font-heading font-bold text-text-dark text-xl">Dashboard</h2>
+        <h2 className="font-heading font-bold text-text-dark text-xl">
+          {user ? `Welcome, ${user.name}` : 'Dashboard'}
+        </h2>
         <p className="text-sm text-gray-500 capitalize">{role} Account</p>
       </div>
 
@@ -59,7 +67,10 @@ export default function Sidebar({ role = 'farmer' }) {
           <Settings size={20} className="text-gray-500" />
           <span>Settings</span>
         </Link>
-        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 font-medium transition-all w-full text-left">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 font-medium transition-all w-full text-left"
+        >
           <LogOut size={20} />
           <span>Logout</span>
         </button>

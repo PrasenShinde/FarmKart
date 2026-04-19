@@ -1,20 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Leaf, Mail, Lock, User, Tractor, Store, ArrowRight } from 'lucide-react';
+import { Leaf, Mail, Lock, User, Tractor, Store, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { cn } from '../../utils/cn';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/ui/Toast';
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { login, signup } = useAuth();
+  const { addToast } = useToast();
   
   const initialTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
   const initialRole = searchParams.get('role') || 'buyer';
   
   const [tab, setTab] = useState(initialTab);
   const [role, setRole] = useState(initialRole);
+  
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const pTab = searchParams.get('tab');
@@ -31,6 +40,34 @@ export default function Auth() {
   const handleRoleSelect = (newRole) => {
     setRole(newRole);
     navigate(`/auth?tab=${tab}&role=${newRole}`, { replace: true });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      let user;
+      if (tab === 'login') {
+        user = await login(email, password, role);
+      } else {
+        user = await signup(name, email, password, role);
+      }
+      
+      // Routing is based on role, wait for toast and context to settle then navigate
+      if (user.role === 'farmer') navigate('/dashboard/farmer');
+      else if (user.role === 'admin') navigate('/dashboard/admin');
+      else navigate('/dashboard/buyer');
+      
+    } catch (error) {
+      addToast({
+        title: 'Authentication Failed',
+        description: error.message,
+        variant: 'error'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -97,13 +134,15 @@ export default function Auth() {
             )}
           </AnimatePresence>
 
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {tab === 'signup' && (
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <Input 
                   type="text" 
                   placeholder="Full Name" 
                   icon={User} 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required 
                 />
               </motion.div>
@@ -113,6 +152,8 @@ export default function Auth() {
               type="email" 
               placeholder="Email or Phone Number" 
               icon={Mail} 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required 
             />
             
@@ -120,6 +161,8 @@ export default function Auth() {
               type="password" 
               placeholder="Password" 
               icon={Lock} 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required 
             />
 
@@ -131,9 +174,20 @@ export default function Auth() {
               </div>
             )}
 
-            <Button fullWidth size="lg" className="mt-6 font-bold text-base gap-2 group">
-              {tab === 'login' ? 'Sign In' : 'Create Account'}
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            <Button 
+              fullWidth 
+              size="lg" 
+              className="mt-6 font-bold text-base gap-2 group"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : tab === 'login' ? (
+                'Sign In'
+              ) : (
+                'Create Account'
+              )}
+              {!isSubmitting && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
             </Button>
           </form>
 

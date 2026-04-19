@@ -1,20 +1,30 @@
 import { motion } from 'framer-motion';
-import { Star, MapPin, ShoppingCart } from 'lucide-react';
+import { Star, MapPin, ShoppingCart, Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { useCart } from '../../context/CartContext';
+import { useProducts } from '../../context/ProductContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../ui/Toast';
 
-export default function ProductCard({ 
-  product = {
-    id: 1,
-    name: 'Organic Tomatoes',
-    farmer: 'Ramesh Patil',
-    price: 45,
-    unit: 'kg',
-    quantity: 50,
-    location: 'Nashik, Maharashtra',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=800'
-  }
-}) {
+export default function ProductCard({ product }) {
+  const { addToCart } = useCart();
+  const { deleteProduct } = useProducts();
+  const { user } = useAuth();
+  const { addToast } = useToast();
+
+  const isOwner = user && user.name === product?.farmer;
+
+  if (!product) return null;
+
+  const handleDelete = () => {
+    deleteProduct(product.id);
+    addToast({ title: 'Listing Deleted', description: `${product.name} has been removed.`, variant: 'success' });
+  };
+
+  const handleBuy = () => {
+    addToCart(product);
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -33,7 +43,7 @@ export default function ProductCard({
         />
         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-semibold text-primary flex items-center gap-1 shadow-sm">
           <Star size={12} className="fill-primary" />
-          {product.rating}
+          {product.rating || 'New'}
         </div>
         <div className="absolute top-3 right-3 bg-accent text-primary-dark px-2 py-1 rounded-md text-xs font-bold shadow-sm">
           Fresh
@@ -71,10 +81,17 @@ export default function ProductCard({
         </div>
 
         {/* Action */}
-        <Button fullWidth className="gap-2 group-hover:bg-primary-dark transition-colors">
-          <ShoppingCart size={18} />
-          Buy Now
-        </Button>
+        {isOwner ? (
+          <Button fullWidth variant="outline" className="gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 hover:border-red-300" onClick={handleDelete}>
+            <Trash2 size={18} />
+            Delete Listing
+          </Button>
+        ) : (
+          <Button fullWidth className="gap-2 group-hover:bg-primary-dark transition-colors" onClick={handleBuy}>
+            <ShoppingCart size={18} />
+            Add to Cart
+          </Button>
+        )}
       </div>
     </motion.div>
   );
